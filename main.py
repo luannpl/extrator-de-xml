@@ -9,13 +9,30 @@ from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox, QWidget
 from PySide6.QtGui import QShortcut, QKeySequence
 import pandas as pd
 
+sucesso = 0
+falha = 0
+total_arquivos = 0
+valor_total = 0
 
-def pegar_infos(nome_arquivo, valores):
+
+def pegar_infos(nome_arquivo, valores, progresso, lista_arquivos, valores_erros):
+    global sucesso, falha, total_arquivos, valor_total
     print("PEGOU AS INFORMAÇÕES DO arquivo", nome_arquivo)
     with open(nome_arquivo, "rb") as arquivo_xml:
         dic_arquivo = xmltodict.parse(arquivo_xml)
+        total_arquivos += 1
+        print(f"Total de arquivos: {total_arquivos}")
+        valor_processado = total_arquivos / len(lista_arquivos) * 100
+        print(f"Progresso atual (%): {valor_processado:.2f}")
+        progresso.setValue(valor_processado)
+
+        if 'nfeProc' not in dic_arquivo:
+            falha += 1
+            valores_erros.append(nome_arquivo)
+            return
 
         if 'nfeProc' in dic_arquivo:
+            sucesso += 1
             infos_nf = dic_arquivo['nfeProc']['NFe']['infNFe']
             chave_nf = infos_nf['@Id']
             fornecedor = infos_nf['emit'].get('xNome', 'Não informado')
@@ -43,7 +60,6 @@ def pegar_infos(nome_arquivo, valores):
 
         try:
 
-            lista_insercao = []
             for produto in produtos:
                 numero_item = produto['@nItem']
                 cod_produto = produto['prod'].get('cProd', 'Não informado')
@@ -86,6 +102,21 @@ def pegar_infos(nome_arquivo, valores):
                         icms_picms = valor.get('pICMS', icms_picms)
                         icms_valor = valor.get('vICMS', icms_valor)
                 
+                ipi = produto['imposto'].get('IPI', {})
+                ipi_cst = 'Não informado'
+                ipi_vbc = 'Não informado'
+                ipi_pipi = 'Não informado'
+                ipi_vipi = 'Não informado'
+
+                for chave, valor in ipi.items():
+                    if isinstance(valor, dict):
+                        ipi_cst = valor.get('CST', ipi_cst)
+                        ipi_vbc = valor.get('vBC', ipi_vbc)
+                        ipi_pipi = valor.get('pIPI', ipi_pipi)
+                        ipi_vipi = valor.get('vIPI', ipi_vipi)
+
+
+
                 pis = produto['imposto'].get('PIS', {})
                 pis_cst = 'Não informado'
                 pis_vbc = 'Não informado'
@@ -111,31 +142,21 @@ def pegar_infos(nome_arquivo, valores):
                         cofins_vbc = valor.get('vBC', cofins_vbc)
                         cofins_pcofins = valor.get('pCOFINS', cofins_pcofins)
                         cofins_vcofins = valor.get('vCOFINS', cofins_vcofins)
-
-                lista_insercao.append((nome_cliente, cnpj_cliente, fornecedor, cnpj_fornecedor, inscricao_estadual, numero_nota, serie, data_emissao, data_sai_ent, chave_nf, numero_item, cod_produto, ean, nome_produto, ncm, cfop,  quantidade,  valor_unitario,  valor_frete, valor_seguro, valor_desconto, valor_outros, valor_produto, ean_tributado, unidade_tributada, quantidade_tributada, valor_unitario_tributado, ind_tot, icms_original, icms_cst, icms_mod_bc, icms_vbc, icms_picms, icms_valor, pis_cst, pis_vbc, pis_ppis, pis_vpis, cofins_cst, cofins_vbc, cofins_pcofins, cofins_vcofins,  nome_do_arquivo))
-
-                print(f"empresa: {nome_cliente}, cnpj_cliente: {cnpj_cliente}, fornecedor: {fornecedor}, cnpj_fornecedor:{cnpj_fornecedor}, ie:{inscricao_estadual}, numero_nota {numero_nota} serie {serie} data_emissao {data_emissao} data_sai_ent {data_sai_ent}  chave: {chave_nf}, , numero_item: {numero_item} cod_produto: {cod_produto}, ean:{ean} nome_produto: {nome_produto}, ncm: {ncm}, cfop:{cfop}  quantidade: {quantidade}, valor_unitario: {valor_unitario}, valor_frete: {valor_frete}, valor_seguro: {valor_seguro}, valor_desconto: {valor_desconto}, valor_outros: {valor_outros}, valor_produto: {valor_produto}, ean_tributado: {ean_tributado}, unidade_tributada:{unidade_tributada}  quantidade_tributada: {quantidade_tributada}, valor_unitario_tributado: {valor_unitario_tributado}, ind_tot:{ind_tot}, icms_original:{icms_original}, icms_cst:{icms_cst}, icms_mod_bc: {icms_mod_bc}, icms_vbc:{icms_vbc}, icms_picms:{icms_picms} , icms_valor{icms_valor}, nome_do_arquivo: {nome_do_arquivo}")
-
-
-                valores.append([nome_cliente, cnpj_cliente, fornecedor, cnpj_fornecedor, inscricao_estadual, numero_nota, serie, data_emissao, data_sai_ent, chave_nf, numero_item, cod_produto, ean, nome_produto, ncm, cfop,  quantidade,  valor_unitario,  valor_frete, valor_seguro, valor_desconto, valor_outros, valor_produto, ean_tributado ,unidade_tributada ,quantidade_tributada, valor_unitario_tributado, ind_tot, icms_original, icms_cst, icms_mod_bc, icms_vbc, icms_picms, icms_valor, pis_cst, pis_vbc, pis_ppis, pis_vpis, cofins_cst, cofins_vbc, cofins_pcofins, cofins_vcofins,nome_do_arquivo])
-
-            
-    
+                        
+                valores.append([nome_cliente, cnpj_cliente, fornecedor, cnpj_fornecedor, inscricao_estadual, numero_nota, serie, data_emissao, data_sai_ent, chave_nf, numero_item, cod_produto, ean, nome_produto, ncm, cfop,  quantidade,  valor_unitario,  valor_frete, valor_seguro, valor_desconto, valor_outros, valor_produto, ean_tributado ,unidade_tributada ,quantidade_tributada, valor_unitario_tributado, ind_tot, icms_original, icms_cst, icms_mod_bc, icms_vbc, icms_picms, icms_valor, ipi_cst, ipi_vbc, ipi_pipi, ipi_vipi ,pis_cst, pis_vbc, pis_ppis, pis_vpis, cofins_cst, cofins_vbc, cofins_pcofins, cofins_vcofins,nome_do_arquivo])
 
             print("Transação concluída e dados inseridos com sucesso!")
 
-        except Exception as e:
-            # Rollback e log do erro
-            # conexao.rollback()
+        except Exception as e:    
             mensagem_aviso("Erro", f"Erro ao inserir dados: {e}")
             print(f"Erro ao inserir dados: {e}")
 
         finally:
-            # Fechamento do cursor
-            # cursor.close()
-            print("Conexão encerrada.") # Fechar apenas o cursor
+            print("Conexão encerrada.") 
 
-def selecionar_pasta():
+def selecionar_pasta(progresso):
+    global sucesso, falha, total_arquivos
+    progresso.setValue(0)
     folder_path = QFileDialog.getExistingDirectory(None, "Selecione a pasta com os arquivos XML")
     if not folder_path:
         mensagem_aviso("Aviso", "Nenhuma pasta foi selecionada.")
@@ -144,39 +165,94 @@ def selecionar_pasta():
     lista_arquivos = [os.path.join(folder_path, arquivo) for arquivo in os.listdir(folder_path) if arquivo.endswith('.xml')]
 
     if not lista_arquivos:
-        QMessageBox.warning(None, "Aviso", "A pasta selecionada não contém arquivos XML.")
+        mensagem_aviso("Aviso", "A pasta selecionada não contém arquivos XML.")
         return
 
-    colunas = ["nome_cliente", "cnpj_cliente", "fornecedor", "cnpj_fornecedor", "inscricao_estadual", "numero_nota", "serie", "data_emissao", "data_sai_ent", "chave_nf", "numero_item", "cod_produto", "ean", "nome_produto", "ncm", "cfop", "quantidade", "valor_unitario",  "valor_frete", "valor_seguro", "valor_desconto", "valor_outros", "valor_produto", "ean_tributado", "unidade_tributada", "quantidade_tributada", "valor_unitario_tributado", "ind_tot", "icms_original", "icms_cst", "icms_mod_bc", "icms_vbc", "icms_picms", "icms_valor", "pis_cst", "pis_vbc", "pis_ppis", "pis_vpis", "cofins_cst", "cofins_vbc", "cofins_pcofins", "cofins_vcofins", "nome_do_arquivo"]
+    colunas = ["nome_cliente", "cnpj_cliente", "fornecedor", "cnpj_fornecedor", "inscricao_estadual", "numero_nota", "serie", "data_emissao", "data_sai_ent", "chave_nf", "numero_item", "cod_produto", "ean", "nome_produto", "ncm", "cfop", "quantidade", "valor_unitario", "valor_frete", "valor_seguro", "valor_desconto", "valor_outros", "valor_produto", "ean_tributado", "unidade_tributada", "quantidade_tributada", "valor_unitario_tributado", "ind_tot", "icms_original", "icms_cst", "icms_mod_bc", "icms_vbc", "icms_picms", "icms_valor", "ipi_cst", "ipi_vbc", "ipi_pipi", "ipi_vipi","pis_cst", "pis_vbc", "pis_ppis", "pis_vpis", "cofins_cst", "cofins_vbc", "cofins_pcofins", "cofins_vcofins", "nome_do_arquivo"]
     valores = []
+    valores_erros = []
+    
 
     try:
         for arquivo in lista_arquivos:
-            pegar_infos(arquivo, valores)
-            
+            pegar_infos(arquivo, valores, progresso, lista_arquivos, valores_erros)
     finally:
-        
-        print("Conexão encerrada")
+        print("Processamento concluído")
 
     tabela = pd.DataFrame(columns=colunas, data=valores)
+    tabela_erros = pd.DataFrame(columns=["Arquivo"], data=valores_erros)
 
-    # Abrir diálogo para salvar o arquivo
-    options = QFileDialog.Options()
-    options |= QFileDialog.DontUseNativeDialog
-    save_path, _ = QFileDialog.getSaveFileName(None, "Salvar arquivo Excel", "", "Arquivos Excel (*.xlsx);;Todos os Arquivos (*)", options=options)
+    mensagem_aviso("Sucesso", f"Processamento concluído. Sucesso: {sucesso}, Falha: {falha}, Total de arquivos: {total_arquivos}")
+    progresso.setValue(100)
+
+    pergunta = QMessageBox()
+    pergunta.setWindowTitle("Salvar arquivo Excel")
+    pergunta.setText("Deseja salvar os dados em um arquivo Excel?")
+    pergunta.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+    pergunta.setDefaultButton(QMessageBox.No)
+    usar_icone(pergunta)
+    
+    resposta = pergunta.exec()
+
+    if resposta == QMessageBox.No:
+        progresso.setValue(0)
+        valores.clear()
+        sucesso, falha, total_arquivos = 0, 0, 0
+        return
+    
+    save_path, _ = QFileDialog.getSaveFileName(
+        None,
+        "Salvar arquivo Excel",
+        "",
+        "Arquivos Excel (*.xlsx);;Todos os Arquivos (*)"
+    )
 
     if not save_path:
         mensagem_aviso("Aviso", "Nenhum caminho de destino foi selecionado.")
         return
 
-    # Garantir que o arquivo tenha a extensão correta
     if not save_path.endswith('.xlsx'):
         save_path += '.xlsx'
 
-    tabela.to_excel(save_path, index=False)
-    mensagem_aviso("Sucesso", f"Arquivo Excel gerado com sucesso em: {save_path}")
-    print(f"Arquivo Excel gerado com sucesso em: {save_path}")
+    if len(valores_erros) > 0:
+        with pd.ExcelWriter(save_path, engine='openpyxl') as writer:
+            tabela.to_excel(writer, sheet_name="Dados Processados", index=False)
+            tabela_erros.to_excel(writer, sheet_name="Erros", index=False)
+    else:
+        tabela.to_excel(save_path, index=False, sheet_name="Dados Processados")
+
+    mensagem = QMessageBox()
+    mensagem.setWindowTitle("Sucesso")
+    mensagem.setText(f"Arquivo Excel gerado com sucesso em:\n{save_path}")
+    abrir_botao = mensagem.addButton("Abrir arquivo", QMessageBox.AcceptRole)
+    mensagem.addButton("Finalizar", QMessageBox.RejectRole)
+    usar_icone(mensagem)
+
+    mensagem.setStyleSheet("""
+        QPushButton {
+            padding: 5px 10px; /* Top/Bottom 10px, Left/Right 20px */
+            margin: 2px; /* Espaço entre os botões */
+            border-radius: 5px; /* Cantos arredondados */
+            background-color: #533cbb;
+        }
+        QPushButton:hover {
+            background-color: #362b68; /* Cor ao passar o mouse */
+        }
+    """)
+
+    mensagem.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+    mensagem.exec()
+
+    if mensagem.clickedButton() == abrir_botao:
+        os.startfile(save_path)  # Windows
+        print(f"Arquivo Excel gerado com sucesso em: {save_path}")
+    else:
+        print("Processo finalizado.")
+    progresso.setValue(0)
+    valores.clear()
+    sucesso, falha, total_arquivos = 0, 0, 0
     return
+
 
 def baixar_icone(url, caminho):
     dir_name = os.path.dirname(caminho)
@@ -210,11 +286,20 @@ def mensagem_aviso(titulo, texto):
     usar_icone(msg)
     msg.exec()
 
+def resource_path(relative_path):
+    """Obtem o caminho correto para o recurso em qualquer ambiente (Python ou executável)"""
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    
+    return os.path.join(base_path, relative_path)
+
 def main():
     app = QtWidgets.QApplication(sys.argv)
 
     janela = QtWidgets.QMainWindow()
-
+    
     usar_icone(janela)
     
     janela.setWindowTitle("XML")
@@ -227,33 +312,51 @@ def main():
 
     botao_frame = QtWidgets.QHBoxLayout()
     layout.addLayout(botao_frame)
-    layout.addStretch()
 
     botoes = [
-        ("Inserir nfes", lambda: selecionar_pasta()),
+        ("Inserir Pasta com XMLS", lambda: selecionar_pasta(progresso)),
     ]
 
     for texto, funcao in botoes:
         botao = QtWidgets.QPushButton(texto)
         botao.clicked.connect(funcao)
         botao.setFont(QtGui.QFont("Arial", 14))
-        botao.setStyleSheet("""
+        botao.setStyleSheet(""" 
             QPushButton {
                 background-color: #001F3F;
                 color: white;
                 border: none;
-                padding: 5px 10px;
+                padding: 10px 10px;
                 border-radius: 5px;
             }
             QPushButton:hover {
-                background-color: #2E236C;
+                background-color: #191970;
             }
         """)
         botao.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         botao_frame.addWidget(botao)
 
-    
+    imagem_placeholder = QtWidgets.QLabel()
+    imagem_placeholder.setPixmap(QtGui.QPixmap(resource_path("images\\logo.png")).scaled(350, 350, QtCore.Qt.KeepAspectRatio))
+    imagem_placeholder.setAlignment(QtCore.Qt.AlignCenter)
 
+    vbox_layout = QtWidgets.QVBoxLayout()
+    vbox_layout.addWidget(imagem_placeholder)
+    vbox_layout.setAlignment(QtCore.Qt.AlignCenter)
+
+    stack_layout = QtWidgets.QStackedLayout()
+    layout.addLayout(stack_layout)
+
+    container_widget = QtWidgets.QWidget()
+    container_widget.setLayout(vbox_layout)
+
+    stack_layout.addWidget(container_widget)
+    stack_layout.setCurrentWidget(container_widget)
+
+    progresso = QtWidgets.QProgressBar()
+    progresso.setRange(0, 100)
+    progresso.setValue(0)
+    layout.addWidget(progresso)
 
     janela.showMaximized()
     app.exec()
