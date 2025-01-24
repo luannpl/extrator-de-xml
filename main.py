@@ -67,22 +67,37 @@ def pegar_infos(nome_arquivo, valores, progresso, lista_arquivos, valores_erros)
                 nome_produto = produto['prod'].get('xProd', 'Não informado')
                 ncm = produto['prod'].get('NCM', 'Não informado')
                 cfop = produto['prod'].get('CFOP', 'Não informado')
-                quantidade = int(float(produto['prod'].get('qCom', 'Não informado')))
+                quantidade = produto['prod'].get('qCom', 'Não informado')
+                if quantidade != 'Não informado':
+                    quantidade = quantidade.replace('.', ',')
                 valor_unitario = produto['prod'].get('vUnCom', 'Não informado')
+                if valor_unitario != 'Não informado':
+                    valor_unitario = valor_unitario.replace('.', ',')
                 valor_frete = produto['prod'].get('vFrete', 'Não informado')
+                if valor_frete != 'Não informado':
+                    valor_frete = valor_frete.replace('.', ',')
                 valor_seguro = produto['prod'].get('vSeg', 'Não informado')
+                if valor_seguro != 'Não informado':
+                    valor_seguro = valor_seguro.replace('.', ',')
                 valor_desconto = produto['prod'].get('vDesc', 'Não informado')
+                if valor_desconto != 'Não informado':
+                    valor_desconto = valor_desconto.replace('.', ',')
                 valor_outros = produto['prod'].get('vOutro', 'Não informado')
+                if valor_outros != 'Não informado':
+                    valor_outros = valor_outros.replace('.', ',')
                 valor_produto = produto['prod'].get('vProd', 'Não informado')
+                if valor_produto != 'Não informado':
+                    valor_produto = valor_produto.replace('.', ',')
                 ean_tributado = produto['prod'].get('cEANTrib', 'Não informado')
                 unidade_tributada = produto['prod'].get('uTrib', 'Não informado')
-                quantidade_tributada = int(float(produto['prod'].get('qTrib', 'Não informado')))
+                quantidade_tributada = produto['prod'].get('qTrib', 'Não informado')
+                if quantidade_tributada != 'Não informado':
+                    quantidade_tributada = quantidade_tributada.replace('.', ',')
                 valor_unitario_tributado = produto['prod'].get('vUnTrib', 'Não informado')
-                ind_tot = produto['prod'].get('indTot', 'Não informado')
-                if valor_unitario != 'Não informado':
-                    valor_unitario = f"{float(valor_unitario):.2f}"
                 if valor_unitario_tributado != 'Não informado':
-                    valor_unitario_tributado = f"{float(valor_unitario_tributado):.2f}"
+                    valor_unitario_tributado = valor_unitario_tributado.replace('.', ',')
+                ind_tot = produto['prod'].get('indTot', 'Não informado')
+            
                 
 
                 icms = produto['imposto'].get('ICMS', {})
@@ -99,8 +114,14 @@ def pegar_infos(nome_arquivo, valores, progresso, lista_arquivos, valores_erros)
                         icms_cst = valor.get('CST', icms_cst)
                         icms_mod_bc = valor.get('modBC', icms_mod_bc)
                         icms_vbc = valor.get('vBC', icms_vbc)
+                        if icms_vbc != 'Não informado':
+                            icms_vbc = icms_vbc.replace('.', ',')
                         icms_picms = valor.get('pICMS', icms_picms)
+                        if icms_picms != 'Não informado':
+                            icms_picms = icms_picms.replace('.', ',')
                         icms_valor = valor.get('vICMS', icms_valor)
+                        if icms_valor != 'Não informado':
+                            icms_valor = icms_valor.replace('.', ',')
                 
                 ipi = produto['imposto'].get('IPI', {})
                 ipi_cst = 'Não informado'
@@ -112,8 +133,14 @@ def pegar_infos(nome_arquivo, valores, progresso, lista_arquivos, valores_erros)
                     if isinstance(valor, dict):
                         ipi_cst = valor.get('CST', ipi_cst)
                         ipi_vbc = valor.get('vBC', ipi_vbc)
+                        if ipi_vbc != 'Não informado':
+                            ipi_vbc = ipi_vbc.replace('.', ',')
                         ipi_pipi = valor.get('pIPI', ipi_pipi)
+                        if ipi_pipi != 'Não informado':
+                            ipi_pipi = ipi_pipi.replace('.', ',')
                         ipi_vipi = valor.get('vIPI', ipi_vipi)
+                        if ipi_vipi != 'Não informado':
+                            ipi_vipi = ipi_vipi.replace('.', ',')
 
 
 
@@ -127,8 +154,14 @@ def pegar_infos(nome_arquivo, valores, progresso, lista_arquivos, valores_erros)
                     if isinstance(valor, dict):
                         pis_cst = valor.get('CST', pis_cst)
                         pis_vbc = valor.get('vBC', pis_vbc)
+                        if pis_vbc != 'Não informado':
+                            pis_vbc = pis_vbc.replace('.', ',')
                         pis_ppis = valor.get('pPIS', pis_ppis)
+                        if pis_ppis != 'Não informado':
+                            pis_ppis = pis_ppis.replace('.', ',')
                         pis_vpis = valor.get('vPIS', pis_vpis)
+                        if pis_vpis != 'Não informado':
+                            pis_vpis = pis_vpis.replace('.', ',')
 
                 cofins = produto['imposto'].get('COFINS', {})
                 cofins_cst = 'Não informado'
@@ -140,8 +173,14 @@ def pegar_infos(nome_arquivo, valores, progresso, lista_arquivos, valores_erros)
                     if isinstance(valor, dict):
                         cofins_cst = valor.get('CST', cofins_cst)
                         cofins_vbc = valor.get('vBC', cofins_vbc)
+                        if cofins_vbc != 'Não informado':
+                            cofins_vbc = cofins_vbc.replace('.', ',')
                         cofins_pcofins = valor.get('pCOFINS', cofins_pcofins)
+                        if cofins_pcofins != 'Não informado':
+                            cofins_pcofins = cofins_pcofins.replace('.', ',')
                         cofins_vcofins = valor.get('vCOFINS', cofins_vcofins)
+                        if cofins_vcofins != 'Não informado':
+                            cofins_vcofins = cofins_vcofins.replace('.', ',')
                         
                 valores.append([nome_cliente, cnpj_cliente, fornecedor, cnpj_fornecedor, inscricao_estadual, numero_nota, serie, data_emissao, data_sai_ent, chave_nf, numero_item, cod_produto, ean, nome_produto, ncm, cfop,  quantidade,  valor_unitario,  valor_frete, valor_seguro, valor_desconto, valor_outros, valor_produto, ean_tributado ,unidade_tributada ,quantidade_tributada, valor_unitario_tributado, ind_tot, icms_original, icms_cst, icms_mod_bc, icms_vbc, icms_picms, icms_valor, ipi_cst, ipi_vbc, ipi_pipi, ipi_vipi ,pis_cst, pis_vbc, pis_ppis, pis_vpis, cofins_cst, cofins_vbc, cofins_pcofins, cofins_vcofins,nome_do_arquivo])
 
