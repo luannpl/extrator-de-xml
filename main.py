@@ -1,5 +1,5 @@
 import xmltodict
-print(xmltodict)
+# print(xmltodict)
 import os
 import sys
 import requests
@@ -61,7 +61,10 @@ def pegar_infos(nome_arquivo, valores, progresso, lista_arquivos, valores_erros)
         try:
 
             for produto in produtos:
-                numero_item = produto['@nItem']
+                try:
+                    numero_item = produto['nItem']
+                except:
+                    numero_item = produto['@nItem']
                 cod_produto = produto['prod'].get('cProd', 'Não informado')
                 ean = produto['prod'].get('cEAN', 'Não informado')
                 nome_produto = produto['prod'].get('xProd', 'Não informado')
@@ -343,6 +346,7 @@ def main():
     
     janela.setWindowTitle("XML")
     janela.setGeometry(100, 100, 800, 600)
+    janela.setStyleSheet("background-color: #030d18;")
 
     widget_central = QtWidgets.QWidget()
     janela.setCentralWidget(widget_central)
