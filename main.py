@@ -2,12 +2,11 @@ import xmltodict
 # print(xmltodict)
 import os
 import sys
-import requests
-from PIL import Image
 from PySide6 import QtWidgets, QtGui, QtCore
-from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox, QWidget
-from PySide6.QtGui import QShortcut, QKeySequence
+from PySide6.QtWidgets import QFileDialog, QMessageBox
 import pandas as pd
+from utils.mensagem import mensagem_aviso, mensagem_sucesso, mensagem_error
+from utils.icone import usar_icone
 
 sucesso = 0
 falha = 0
@@ -189,25 +188,21 @@ def pegar_infos(nome_arquivo, valores, progresso, lista_arquivos, valores_erros)
 
             print("Transação concluída e dados inseridos com sucesso!")
 
-        except Exception as e:    
-            mensagem_aviso("Erro", f"Erro ao inserir dados: {e}")
-            print(f"Erro ao inserir dados: {e}")
-
-        finally:
-            print("Conexão encerrada.") 
+        except Exception as e:
+            mensagem_error(f"Erro ao inserir dados: {e}")   
 
 def selecionar_pasta(progresso):
     global sucesso, falha, total_arquivos
     progresso.setValue(0)
     folder_path = QFileDialog.getExistingDirectory(None, "Selecione a pasta com os arquivos XML")
     if not folder_path:
-        mensagem_aviso("Aviso", "Nenhuma pasta foi selecionada.")
+        mensagem_aviso("Nenhuma pasta foi selecionada.")
         return
 
     lista_arquivos = [os.path.join(folder_path, arquivo) for arquivo in os.listdir(folder_path) if arquivo.endswith('.xml')]
 
     if not lista_arquivos:
-        mensagem_aviso("Aviso", "A pasta selecionada não contém arquivos XML.")
+        mensagem_aviso("A pasta selecionada não contém arquivos XML.")
         return
 
     colunas = ["nome_cliente", "cnpj_cliente", "fornecedor", "cnpj_fornecedor", "inscricao_estadual", "numero_nota", "serie", "data_emissao", "data_sai_ent", "chave_nf", "numero_item", "cod_produto", "ean", "nome_produto", "ncm", "cfop", "quantidade", "valor_unitario", "valor_frete", "valor_seguro", "valor_desconto", "valor_outros", "valor_produto", "ean_tributado", "unidade_tributada", "quantidade_tributada", "valor_unitario_tributado", "ind_tot", "icms_original", "icms_cst", "icms_mod_bc", "icms_vbc", "icms_picms", "icms_valor", "ipi_cst", "ipi_vbc", "ipi_pipi", "ipi_vipi","pis_cst", "pis_vbc", "pis_ppis", "pis_vpis", "cofins_cst", "cofins_vbc", "cofins_pcofins", "cofins_vcofins", "nome_do_arquivo"]
@@ -224,7 +219,7 @@ def selecionar_pasta(progresso):
     tabela = pd.DataFrame(columns=colunas, data=valores)
     tabela_erros = pd.DataFrame(columns=["Arquivo"], data=valores_erros)
 
-    mensagem_aviso("Sucesso", f"Processamento concluído. Sucesso: {sucesso}, Falha: {falha}, Total de arquivos: {total_arquivos}")
+    mensagem_sucesso(f"Processamento concluído. Sucesso: {sucesso}, Falha: {falha}, Total de arquivos: {total_arquivos}")
     progresso.setValue(100)
 
     pergunta = QMessageBox()
@@ -232,6 +227,7 @@ def selecionar_pasta(progresso):
     pergunta.setText("Deseja salvar os dados em um arquivo Excel?")
     pergunta.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
     pergunta.setDefaultButton(QMessageBox.No)
+    pergunta.setStyleSheet("background-color: #001F3F; color: #ffffff; font-size: 16px; font-weight: bold;")
     usar_icone(pergunta)
     
     resposta = pergunta.exec()
@@ -250,7 +246,7 @@ def selecionar_pasta(progresso):
     )
 
     if not save_path:
-        mensagem_aviso("Aviso", "Nenhum caminho de destino foi selecionado.")
+        mensagem_aviso("Nenhum caminho de destino foi selecionado.")
         return
 
     if not save_path.endswith('.xlsx'):
@@ -271,14 +267,21 @@ def selecionar_pasta(progresso):
     usar_icone(mensagem)
 
     mensagem.setStyleSheet("""
+        QMessageBox {
+            background-color: #001F3F; 
+            color: #ffffff; 
+            font-size: 16px; 
+            font-weight: bold;
+        }
         QPushButton {
-            padding: 5px 10px; /* Top/Bottom 10px, Left/Right 20px */
-            margin: 2px; /* Espaço entre os botões */
-            border-radius: 5px; /* Cantos arredondados */
+            padding: 5px 10px; 
+            margin: 2px; 
+            border-radius: 5px; 
             background-color: #533cbb;
+            color: white;
         }
         QPushButton:hover {
-            background-color: #362b68; /* Cor ao passar o mouse */
+            background-color: #362b68;
         }
     """)
 
@@ -295,38 +298,6 @@ def selecionar_pasta(progresso):
     sucesso, falha, total_arquivos = 0, 0, 0
     return
 
-
-def baixar_icone(url, caminho):
-    dir_name = os.path.dirname(caminho)
-    if not os.path.exists(dir_name):
-        os.makedirs(dir_name)
-    
-    resposta = requests.get(url)
-    with open(caminho, 'wb') as arquivo:
-        arquivo.write(resposta.content)
-
-def usar_icone(janela):
-        url_icone = "https://assertivuscontabil.com.br/wp-content/uploads/2023/11/76.png"  
-        caminho_icone = "images/icone.png" 
-        
-        baixar_icone(url_icone, caminho_icone)
-        icon = Image.open(caminho_icone)
-        icon.save(os.path.splitext(caminho_icone)[0] + '.ico', format="ICO")
-        
-        if os.path.exists(caminho_icone):
-            if sys.platform == "win32":
-                janela.setWindowIcon(QtGui.QIcon(os.path.splitext(caminho_icone)[0] + '.ico'))
-            else:
-                janela.setWindowIcon(QtGui.QIcon(caminho_icone))
-        else:
-            print(f"Erro: Arquivo de ícone não encontrado em {caminho_icone}")
-
-def mensagem_aviso(titulo, texto):
-    msg = QMessageBox()
-    msg.setWindowTitle(titulo)
-    msg.setText(texto)
-    usar_icone(msg)
-    msg.exec()
 
 def resource_path(relative_path):
     """Obtem o caminho correto para o recurso em qualquer ambiente (Python ou executável)"""
